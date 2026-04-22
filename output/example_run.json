@@ -1,0 +1,93 @@
+{
+  "game_name": "Tommie EcoOps: Campus Grid",
+  "datasets_used": [
+    "ust_selected_game_nodes.csv",
+    "ust_building_edges.csv",
+    "ust_distance_matrix.csv",
+    "ust_energy_assets.csv",
+    "ust_campus_resources.csv",
+    "ust_sustainability_factors.csv",
+    "sustainability_words (2).txt"
+  ],
+  "graph_representation": {
+    "nodes_count": 30,
+    "edge_count": 42,
+    "selected_buildings_count": 16
+  },
+  "search_component": {
+    "algorithm": "A*",
+    "state": "(current_node, remaining_required_visits)",
+    "actions": "move to adjacent node",
+    "goal": "visit required nodes then end at Anderson",
+    "start_node": "FreyHall",
+    "required_nodes": [
+      "KochCommons",
+      "OEC"
+    ],
+    "path": [
+      "FreyHall",
+      "Library",
+      "OSS",
+      "OEC",
+      "OSS",
+      "KochCommons",
+      "Anderson"
+    ],
+    "sustainability_aware_cost": 4.546
+  },
+  "minimax_component": {
+    "players": [
+      "Sustainability Planner (MAX)",
+      "Demand Pressure Agent (MIN)"
+    ],
+    "evaluation": "sustainability_bonus - energy_penalty over controlled nodes",
+    "depth_limit": 3,
+    "best_opening_action": "FreyHall",
+    "evaluation_score": 6.5
+  },
+  "csp_component": {
+    "variables": [
+      "Anderson",
+      "FreyHall",
+      "OEC",
+      "OSS",
+      "Schoenecker",
+      "Murray",
+      "Library",
+      "Brady"
+    ],
+    "domain": [
+      "NONE",
+      "RECYCLE_BIN",
+      "COMPOST_HUB",
+      "BIKE_SUPPORT"
+    ],
+    "constraints": [
+      "max 5 non-NONE placements",
+      "all priority nodes must receive a resource",
+      "at least 2 high-energy nodes must receive a resource",
+      "at most 2 COMPOST_HUB placements"
+    ],
+    "valid_assignment": {
+      "OEC": "RECYCLE_BIN",
+      "Anderson": "RECYCLE_BIN",
+      "FreyHall": "RECYCLE_BIN",
+      "OSS": "NONE",
+      "Schoenecker": "RECYCLE_BIN",
+      "Murray": "NONE",
+      "Library": "NONE",
+      "Brady": "NONE"
+    }
+  },
+  "integrated_awareness": {
+    "vocabulary_prompt": "Use a valid sustainability term to unlock advanced action.",
+    "vocabulary_attempt": "Carbon neutral",
+    "vocabulary_passed": true,
+    "trivia_prompt": "What is the campus carbon neutrality target year?",
+    "trivia_expected_answer": "2035",
+    "trivia_attempt": "2035",
+    "trivia_passed": true,
+    "resource_action_success": true,
+    "path_energy_modifier": -0.5
+  }
+}
