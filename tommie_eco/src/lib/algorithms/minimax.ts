@@ -4,7 +4,7 @@ import {
   MinimaxResult,
   NodeName,
 } from "../types";
-import { MINIMAX_BASE_SCORE, MINIMAX_DEPTH } from "../constants";
+import { MINIMAX_BASE_SCORE, MINIMAX_DEPTH } from "@/lib/constants";
 
 type MinimaxState = Map<NodeName, number>; // 0=neutral, +1=planner, -1=pressure
 

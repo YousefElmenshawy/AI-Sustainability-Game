@@ -1,3 +1,10 @@
+import { type ClassValue, clsx } from "clsx";
+import { twMerge } from "tailwind-merge";
+
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
+
 // Normalize text for fuzzy matching (lowercase + remove non-alphanumeric)
 export function normalized(text: string): string {
   return text.toLowerCase().replace(/[^a-z0-9]/g, "");
