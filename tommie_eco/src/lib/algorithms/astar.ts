@@ -6,7 +6,7 @@ import {
   AStarResult,
   NodeName,
 } from "../types";
-import { DISTANCE_MULTIPLIER, MINIMUM_COST } from "../constants";
+import { DISTANCE_MULTIPLIER, MINIMUM_COST } from "@/lib/constants";
 
 interface SearchState {
   current: NodeName;
@@ -76,18 +76,20 @@ export function aStarTaskPlanner(
 
   // Heuristic: distance to nearest remaining task + distance to goal
   function heuristic(state: SearchState): number {
+    const currentNode = heuristicDistance.get(state.current);
+    if (!currentNode) return 0;
+
     if (state.remainingTasks.size === 0) {
-      const key = `${state.current}|${goal}`;
-      return (heuristicDistance.get(key) || 0) * DISTANCE_MULTIPLIER;
+      return (currentNode.get(goal) || 0) * DISTANCE_MULTIPLIER;
     }
 
     let minDist = Infinity;
     state.remainingTasks.forEach((task) => {
-      const dist = heuristicDistance.get(`${state.current}|${task}`) || 0;
+      const dist = currentNode.get(task) || 0;
       minDist = Math.min(minDist, dist);
     });
 
-    const goalDist = heuristicDistance.get(`${state.current}|${goal}`) || 0;
+    const goalDist = currentNode.get(goal) || 0;
     return minDist * DISTANCE_MULTIPLIER + goalDist * 250;
   }
 

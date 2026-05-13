@@ -6,6 +6,7 @@ import { parseCSV } from '@/lib/utils';
 import type { BuildingEdge, EnergyAsset, CampusResource, ResourceType, Graph, DistanceMatrix, EnergyPenaltyMap, SustainabilityBonusMap } from '@/lib/types';
 import { minimaxOpeningAction } from '@/lib/algorithms/minimax';
 import { solveResourceCSP } from '@/lib/algorithms/csp';
+import { aStarTaskPlanner } from '@/lib/algorithms/astar';
 
 interface Building {
   id: string;
@@ -32,6 +33,11 @@ interface GameState {
   minimaxUses: number;
   cspUses: number;
   astarUses: number;
+  algorithmResults: {
+    astarPlans: { path: string[]; score: number; taskCount: number }[];
+    minimaxDecisions: { bestBuilding: string; score: number; candidateCount: number }[];
+    cspValidations: { resource: string; building: string; valid: boolean }[];
+  };
 }
 
 interface TriviaQuestion {
@@ -70,6 +76,11 @@ export default function EcoCampusStrategyGame() {
     minimaxUses: 0,
     cspUses: 0,
     astarUses: 0,
+    algorithmResults: {
+      astarPlans: [],
+      minimaxDecisions: [],
+      cspValidations: [],
+    },
   });
 
   const [currentQuestion, setCurrentQuestion] = useState<TriviaQuestion | null>(null);
@@ -414,6 +425,77 @@ export default function EcoCampusStrategyGame() {
     return campusGraph[buildingId] || [];
   };
 
+  // Use A* to plan optimal path through high-value buildings
+  const planOptimalTaskPath = (): string | null => {
+    if (!algorithmGraph || !energyPenaltyMap || !sustainabilityBonusMap || !distanceMatrix) {
+      return null;
+    }
+
+    try {
+      // Identify high-value tasks (buildings with good sustainability bonus)
+      const taskBuildings = buildings
+        .filter(b => !gameState.playerResources[b.id] && !gameState.aiBlocks[b.id])
+        .filter(b => {
+          const bonus = sustainabilityBonusMap.get(b.id) || 0;
+          const penalty = energyPenaltyMap.get(b.id) || 0;
+          return bonus >= penalty; // High-value targets
+        })
+        .map(b => b.id);
+
+      if (taskBuildings.length === 0) return null;
+
+      // Use A* to find optimal path through top 5 tasks
+      const topTasks = taskBuildings.slice(0, Math.min(5, taskBuildings.length));
+      const taskSet = new Set(topTasks);
+
+      // Find suitable goal node (any unblocked building)
+      const goalNode = buildings.find(
+        b => !gameState.playerResources[b.id] && !gameState.aiBlocks[b.id]
+      )?.id;
+
+      if (!goalNode) return null;
+
+      // Run A* task planner
+      const astarResult = aStarTaskPlanner(
+        algorithmGraph,
+        gameState.playerPosition,
+        goalNode,
+        taskSet,
+        energyPenaltyMap,
+        sustainabilityBonusMap,
+        distanceMatrix
+      );
+
+      // Track A* usage and results
+      setGameState(prev => ({
+        ...prev,
+        astarUses: prev.astarUses + 1,
+        algorithmResults: {
+          ...prev.algorithmResults,
+          astarPlans: [
+            ...prev.algorithmResults.astarPlans,
+            {
+              path: astarResult.path,
+              score: astarResult.totalCost,
+              taskCount: topTasks.length,
+            },
+          ],
+        },
+      }));
+
+      // Return the first waypoint in the optimal path (best node to block)
+      if (astarResult.path && astarResult.path.length > 1) {
+        // Return the next node in the path (after current position)
+        return astarResult.path[1];
+      }
+
+      return null;
+    } catch (error) {
+      console.warn('A* path planning failed:', error);
+      return null;
+    }
+  };
+
   const getAIMove = (): string => {
     if (!energyPenaltyMap || !sustainabilityBonusMap) {
       // Fallback if algorithm data not ready
@@ -431,7 +513,17 @@ export default function EcoCampusStrategyGame() {
 
       if (candidates.length === 0) return gameState.playerPosition;
 
-      // Use minimax algorithm to find best building to block
+      // FIRST: Try A* to find optimal path through high-value buildings
+      const astarNode = planOptimalTaskPath();
+      if (astarNode && candidates.includes(astarNode)) {
+        setGameState(prev => ({
+          ...prev,
+          message: `🤖 AI blocked ${astarNode} (strategic path interruption)`
+        }));
+        return astarNode;
+      }
+
+      // FALLBACK: Use minimax algorithm to find best building to block
       setGameState(prev => ({
         ...prev,
         minimaxUses: prev.minimaxUses + 1,
@@ -471,6 +563,22 @@ export default function EcoCampusStrategyGame() {
           });
         }
       }
+
+      // Track minimax decision
+      setGameState(prev => ({
+        ...prev,
+        algorithmResults: {
+          ...prev.algorithmResults,
+          minimaxDecisions: [
+            ...prev.algorithmResults.minimaxDecisions,
+            {
+              bestBuilding: selectedBuilding,
+              score: minimaxResult.evaluationScore,
+              candidateCount: candidates.length,
+            },
+          ],
+        },
+      }));
 
       return selectedBuilding;
     } catch (error) {
@@ -564,19 +672,61 @@ export default function EcoCampusStrategyGame() {
       });
 
       if (resourceCount > 5) {
-        setGameState(prev => ({ ...prev, message: '❌ Resource limit reached (max 5)!' }));
+        setGameState(prev => ({ 
+          ...prev, 
+          message: '❌ Resource limit reached (max 5)!',
+          algorithmResults: {
+            ...prev.algorithmResults,
+            cspValidations: [
+              ...prev.algorithmResults.cspValidations,
+              { resource, building: gameState.playerPosition, valid: false },
+            ],
+          },
+        }));
         return false;
       }
 
       if (compostCount > 2) {
-        setGameState(prev => ({ ...prev, message: '❌ Max 2 compost hubs allowed!' }));
+        setGameState(prev => ({ 
+          ...prev, 
+          message: '❌ Max 2 compost hubs allowed!',
+          algorithmResults: {
+            ...prev.algorithmResults,
+            cspValidations: [
+              ...prev.algorithmResults.cspValidations,
+              { resource, building: gameState.playerPosition, valid: false },
+            ],
+          },
+        }));
         return false;
       }
+
+      // Valid placement - track result
+      setGameState(prev => ({
+        ...prev,
+        algorithmResults: {
+          ...prev.algorithmResults,
+          cspValidations: [
+            ...prev.algorithmResults.cspValidations,
+            { resource, building: gameState.playerPosition, valid: true },
+          ],
+        },
+      }));
 
       return true;
     } catch (error) {
       console.warn('CSP validation failed:', error);
-      setGameState(prev => ({ ...prev, message: '❌ Placement not allowed by constraints!' }));
+      setGameState(prev => ({ 
+        ...prev, 
+        message: '❌ Placement not allowed by constraints!',
+        algorithmResults: {
+          ...prev.algorithmResults,
+          cspValidations: [
+            ...prev.algorithmResults.cspValidations,
+            { resource, building: gameState.playerPosition, valid: false },
+          ],
+        },
+      }));
       return false;
     }
   };
@@ -725,23 +875,29 @@ export default function EcoCampusStrategyGame() {
           </div>
 
           {/* Algorithm Usage */}
-          <div className="grid grid-cols-3 gap-4 mb-8">
+          <div className="grid grid-cols-4 gap-4 mb-8">
             <div className="bg-gradient-to-br from-purple-900 to-purple-800 rounded-lg p-6 border border-purple-600">
               <div className="text-4xl font-bold text-purple-300 mb-2">{gameState.minimaxUses}</div>
               <p className="text-purple-200 font-semibold">Minimax Decisions</p>
-              <p className="text-sm text-purple-300 mt-2">AI used minimax algorithm to find optimal building blocks</p>
+              <p className="text-sm text-purple-300 mt-2">AI used minimax to find optimal blocks</p>
             </div>
 
             <div className="bg-gradient-to-br from-blue-900 to-blue-800 rounded-lg p-6 border border-blue-600">
               <div className="text-4xl font-bold text-blue-300 mb-2">{gameState.cspUses}</div>
               <p className="text-blue-200 font-semibold">CSP Validations</p>
-              <p className="text-sm text-blue-300 mt-2">Player resource placements checked with constraint satisfaction</p>
+              <p className="text-sm text-blue-300 mt-2">Player resource placements checked</p>
+            </div>
+
+            <div className="bg-gradient-to-br from-orange-900 to-orange-800 rounded-lg p-6 border border-orange-600">
+              <div className="text-4xl font-bold text-orange-300 mb-2">{gameState.astarUses}</div>
+              <p className="text-orange-200 font-semibold">A* Path Plans</p>
+              <p className="text-sm text-orange-300 mt-2">AI planned optimal task routes</p>
             </div>
 
             <div className="bg-gradient-to-br from-cyan-900 to-cyan-800 rounded-lg p-6 border border-cyan-600">
               <div className="text-4xl font-bold text-cyan-300 mb-2">{gameState.turn - 1}</div>
               <p className="text-cyan-200 font-semibold">Total Turns</p>
-              <p className="text-sm text-cyan-300 mt-2">Game lasted {gameState.turn - 1} rounds of strategic gameplay</p>
+              <p className="text-sm text-cyan-300 mt-2">Game lasted {gameState.turn - 1} rounds</p>
             </div>
           </div>
 
@@ -785,6 +941,10 @@ export default function EcoCampusStrategyGame() {
                   <span className="text-purple-400 font-bold">{gameState.minimaxUses} decisions</span>
                 </div>
                 <div className="flex justify-between">
+                  <span className="text-slate-300">A* Path Plans:</span>
+                  <span className="text-orange-400 font-bold">{gameState.astarUses} plans</span>
+                </div>
+                <div className="flex justify-between">
                   <span className="text-slate-300">Avg. Score/Turn:</span>
                   <span className="text-red-400 font-bold">{(gameState.aiScore / (gameState.turn - 1)).toFixed(1)}</span>
                 </div>
@@ -794,24 +954,63 @@ export default function EcoCampusStrategyGame() {
 
           {/* Algorithms Used */}
           <div className="bg-slate-800 rounded-lg p-6 border border-slate-600 mb-8">
-            <h2 className="text-xl font-bold text-green-400 mb-4">🧠 Algorithms Used</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="bg-slate-700 rounded p-4">
-                <p className="font-semibold text-purple-300">⚔️ Minimax Algorithm</p>
-                <p className="text-sm text-slate-300 mt-2">Used {gameState.minimaxUses} times to evaluate optimal blocking positions. AI searched 2 moves ahead considering energy penalties and sustainability bonuses.</p>
+            <h2 className="text-xl font-bold text-green-400 mb-4">🧠 Detailed Algorithm Results</h2>
+            
+            {/* Minimax Results */}
+            <div className="mb-6">
+              <div className="bg-slate-700 rounded p-4 mb-3">
+                <p className="font-semibold text-purple-300">⚔️ Minimax Algorithm - {gameState.minimaxUses} decisions made</p>
+                <p className="text-sm text-slate-300 mt-1">Game tree search evaluated candidate positions 2 moves ahead</p>
               </div>
-              <div className="bg-slate-700 rounded p-4">
-                <p className="font-semibold text-blue-300">🔗 CSP Algorithm</p>
-                <p className="text-sm text-slate-300 mt-2">Used {gameState.cspUses} times to validate resource placements. Ensured max 5 resources, max 2 compost hubs, and no conflicts.</p>
+              {gameState.algorithmResults.minimaxDecisions.length > 0 ? (
+                <div className="bg-slate-900 rounded p-3 max-h-40 overflow-y-auto space-y-2">
+                  {gameState.algorithmResults.minimaxDecisions.map((decision, idx) => (
+                    <div key={idx} className="text-xs text-slate-300 border-l-2 border-purple-600 pl-2">
+                      <span className="text-purple-400">Turn {idx + 1}</span>: Evaluated <span className="font-bold">{decision.candidateCount}</span> candidates, picked <span className="font-bold text-green-400">{decision.bestBuilding}</span> (score: {decision.score.toFixed(1)})
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-xs text-slate-400 italic">No decisions recorded</p>
+              )}
+            </div>
+
+            {/* CSP Results */}
+            <div className="mb-6">
+              <div className="bg-slate-700 rounded p-4 mb-3">
+                <p className="font-semibold text-blue-300">🔗 CSP Algorithm - {gameState.cspUses} validations performed</p>
+                <p className="text-sm text-slate-300 mt-1">Constraint satisfaction validated resource placements</p>
               </div>
-              <div className="bg-slate-700 rounded p-4">
-                <p className="font-semibold text-cyan-300">📍 Distance Matrix</p>
-                <p className="text-sm text-slate-300 mt-2">Used throughout for AI proximity analysis. AI considered building distances using real UST campus coordinates.</p>
+              {gameState.algorithmResults.cspValidations.length > 0 ? (
+                <div className="bg-slate-900 rounded p-3 max-h-40 overflow-y-auto space-y-2">
+                  {gameState.algorithmResults.cspValidations.map((validation, idx) => (
+                    <div key={idx} className="text-xs text-slate-300 border-l-2 border-blue-600 pl-2">
+                      <span className="text-blue-400">Check {idx + 1}</span>: <span className="font-bold">{validation.resource}</span> at <span className="font-bold">{validation.building}</span> → <span className={validation.valid ? "text-green-400 font-bold" : "text-red-400 font-bold"}>{validation.valid ? '✓ VALID' : '✗ REJECTED'}</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-xs text-slate-400 italic">No validations recorded</p>
+              )}
+            </div>
+
+            {/* A* Results */}
+            <div className="mb-6">
+              <div className="bg-slate-700 rounded p-4 mb-3">
+                <p className="font-semibold text-orange-300">🗺️ A* Pathfinding - {gameState.astarUses} path plans</p>
+                <p className="text-sm text-slate-300 mt-1">Heuristic search found optimal task routes through campus</p>
               </div>
-              <div className="bg-slate-700 rounded p-4">
-                <p className="font-semibold text-yellow-300">🗺️ Real Campus Data</p>
-                <p className="text-sm text-slate-300 mt-2">All decisions based on real UST building coordinates, energy asset data, and campus resource locations.</p>
-              </div>
+              {gameState.algorithmResults.astarPlans.length > 0 ? (
+                <div className="bg-slate-900 rounded p-3 max-h-40 overflow-y-auto space-y-2">
+                  {gameState.algorithmResults.astarPlans.map((plan, idx) => (
+                    <div key={idx} className="text-xs text-slate-300 border-l-2 border-orange-600 pl-2">
+                      <span className="text-orange-400">Plan {idx + 1}</span>: Path with <span className="font-bold">{plan.path.length}</span> nodes through <span className="font-bold">{plan.taskCount}</span> high-value targets (cost: {plan.score.toFixed(1)}) → <span className="text-orange-300">{plan.path.join(' → ')}</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-xs text-slate-400 italic">No plans recorded</p>
+              )}
             </div>
           </div>
 

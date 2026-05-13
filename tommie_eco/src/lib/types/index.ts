@@ -7,8 +7,8 @@ export type Cost = number;
 // Graph structure: node -> [(neighbor, distance)]
 export type Graph = Map<NodeName, [NodeName, Distance][]>;
 
-// Distance matrix for heuristics: (src, dst) -> distance
-export type DistanceMatrix = Map<string, Distance>;
+// Distance matrix for heuristics: node -> (target -> distance)
+export type DistanceMatrix = Map<string, Map<string, number>>;
 
 // Scoring dictionaries
 export type EnergyPenaltyMap = Map<NodeName, number>;

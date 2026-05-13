@@ -13,6 +13,10 @@ export const MINIMAX_DEPTH = 2; // Search depth for minimax algorithm
 export const MINIMAX_BASE_SCORE = 10; // Base score for minimax evaluation
 export const MINIMAX_MAX_TURNS = 10; // Max turns in a game
 
+// A* Pathfinding Constants
+export const DISTANCE_MULTIPLIER = 1.5; // Cost multiplier for distance in A* search
+export const MINIMUM_COST = 0.5; // Minimum cost for any move
+
 // Game Mechanics
 export const MAX_RESOURCES = 5; // Total resources player can place
 export const TRIVIA_TIME_LIMIT = 15000; // ms for trivia questions
