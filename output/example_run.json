@@ -89,5 +89,64 @@
     "trivia_passed": true,
     "resource_action_success": true,
     "path_energy_modifier": -0.5
+  },
+  "deliverable_2_monte_carlo": {
+    "question": "Which route strategy is more sustainable and stable under uncertainty?",
+    "simulation_unit": "One campus planning cycle with uncertain congestion, energy demand, and resource-action outcomes.",
+    "runs": 300,
+    "strategies": {
+      "sustainability_aware_a_star": {
+        "description": "Visits all required objectives while planning with dataset-driven energy penalties and bonuses.",
+        "path": [
+          "FreyHall",
+          "Library",
+          "OSS",
+          "OEC",
+          "OSS",
+          "KochCommons",
+          "Anderson"
+        ],
+        "required_nodes": [
+          "KochCommons",
+          "OEC"
+        ],
+        "metrics": {
+          "average": 6.608,
+          "best_case": 4.861,
+          "worst_case": 8.614,
+          "std_dev": 0.836
+        }
+      },
+      "distance_first_route": {
+        "description": "Targets only the highest-energy required building, then minimizes total travel distance.",
+        "path": [
+          "FreyHall",
+          "Library",
+          "OSS",
+          "OEC",
+          "OSS",
+          "Anderson"
+        ],
+        "required_nodes": [
+          "OEC"
+        ],
+        "metrics": {
+          "average": 6.415,
+          "best_case": 4.221,
+          "worst_case": 9.142,
+          "std_dev": 0.997
+        }
+      }
+    },
+    "uncertainty_model": {
+      "travel_cost": "distance * uniform(0.9, 1.8)",
+      "energy_variation": "energy_penalty * uniform(0.8, 1.5)",
+      "resource_effectiveness": "sustainability_bonus * uniform(0.7, 1.2)",
+      "action_success": "random() < clip(0.45 + 0.08*bonus - 0.04*energy, 0.25, 0.9)"
+    },
+    "comparison": {
+      "sustainability_strategy_win_rate_percent": 44.67,
+      "average_cost_gap_distance_minus_sustainable": -0.193
+    }
   }
 }

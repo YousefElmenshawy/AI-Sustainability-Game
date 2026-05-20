@@ -3,7 +3,9 @@ from __future__ import annotations
 import csv
 import heapq
 import json
+import random
 import re
+import statistics
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, List, Set, Tuple
@@ -281,6 +283,153 @@ def awareness_gate(sustainability_words: List[str], factors: List[Dict[str, str]
     }
 
 
+# Deliverable 2: Monte Carlo simulation under uncertainty.
+def shortest_path_with_tasks(
+    graph: Dict[str, List[Tuple[str, float]]],
+    start: str,
+    goal: str,
+    tasks: Set[str],
+) -> Tuple[List[str], float]:
+    zero = {node: 0.0 for node in graph}
+    return a_star_task_planner(
+        graph=graph,
+        start=start,
+        goal=goal,
+        tasks=tasks,
+        energy_penalty=zero,
+        sustainability_bonus=zero,
+        heuristic_distance={},
+    )
+
+
+def sample_stochastic_step_cost(
+    next_node: str,
+    distance: float,
+    energy_penalty: Dict[str, float],
+    sustainability_bonus: Dict[str, float],
+) -> float:
+    base_travel = distance * 1000
+    travel_cost = base_travel * random.uniform(0.9, 1.8)
+
+    energy_base = max(0.0, energy_penalty.get(next_node, 0.0))
+    energy_cost = energy_base * random.uniform(0.8, 1.5)
+
+    resource_base = max(0.0, sustainability_bonus.get(next_node, 0.0))
+    resource_effect = resource_base * random.uniform(0.7, 1.2)
+
+    success_probability = min(
+        0.9,
+        max(0.25, 0.45 + (resource_base * 0.08) - (energy_base * 0.04)),
+    )
+    action_success = random.random() < success_probability
+    sustainability_credit = resource_effect if action_success else 0.0
+    failure_penalty = 0.6 if not action_success and resource_base > 0 else 0.0
+
+    return max(0.0001, travel_cost + energy_cost - sustainability_credit + failure_penalty)
+
+
+def monte_carlo_path_cost(
+    path: List[str],
+    graph: Dict[str, List[Tuple[str, float]]],
+    energy_penalty: Dict[str, float],
+    sustainability_bonus: Dict[str, float],
+) -> float:
+    adjacency = {(src, dst): dist for src, edges in graph.items() for dst, dist in edges}
+    total = 0.0
+    for i in range(1, len(path)):
+        src = path[i - 1]
+        dst = path[i]
+        dist = adjacency[(src, dst)]
+        total += sample_stochastic_step_cost(dst, dist, energy_penalty, sustainability_bonus)
+    return total
+
+
+def summarize_runs(values: List[float]) -> Dict[str, float]:
+    return {
+        "average": round(statistics.mean(values), 3),
+        "best_case": round(min(values), 3),
+        "worst_case": round(max(values), 3),
+        "std_dev": round(statistics.pstdev(values), 3),
+    }
+
+
+def run_monte_carlo_comparison(
+    graph: Dict[str, List[Tuple[str, float]]],
+    start_node: str,
+    goal_node: str,
+    required_visit_nodes: Set[str],
+    energy_penalty: Dict[str, float],
+    sustainability_bonus: Dict[str, float],
+    distance_lookup: Dict[Tuple[str, str], float],
+    runs: int = 300,
+) -> Dict[str, object]:
+    sustainability_tasks = set(required_visit_nodes)
+    targeted_task = max(required_visit_nodes, key=lambda node: energy_penalty.get(node, 0.0))
+    distance_strategy_tasks = {targeted_task}
+
+    sustainable_path, _ = a_star_task_planner(
+        graph=graph,
+        start=start_node,
+        goal=goal_node,
+        tasks=sustainability_tasks,
+        energy_penalty=energy_penalty,
+        sustainability_bonus=sustainability_bonus,
+        heuristic_distance=distance_lookup,
+    )
+    shortest_path, _ = shortest_path_with_tasks(
+        graph=graph,
+        start=start_node,
+        goal=goal_node,
+        tasks=distance_strategy_tasks,
+    )
+
+    sustainable_runs = [
+        monte_carlo_path_cost(sustainable_path, graph, energy_penalty, sustainability_bonus)
+        for _ in range(runs)
+    ]
+    shortest_runs = [
+        monte_carlo_path_cost(shortest_path, graph, energy_penalty, sustainability_bonus)
+        for _ in range(runs)
+    ]
+
+    sustainable_summary = summarize_runs(sustainable_runs)
+    shortest_summary = summarize_runs(shortest_runs)
+
+    wins_for_sustainable = sum(1 for a, b in zip(sustainable_runs, shortest_runs) if a < b)
+
+    return {
+        "question": "Which route strategy is more sustainable and stable under uncertainty?",
+        "simulation_unit": "One campus planning cycle with uncertain congestion, energy demand, and resource-action outcomes.",
+        "runs": runs,
+        "strategies": {
+            "sustainability_aware_a_star": {
+                "description": "Visits all required objectives while planning with dataset-driven energy penalties and bonuses.",
+                "path": sustainable_path,
+                "required_nodes": sorted(sustainability_tasks),
+                "metrics": sustainable_summary,
+            },
+            "distance_first_route": {
+                "description": "Targets only the highest-energy required building, then minimizes total travel distance.",
+                "path": shortest_path,
+                "required_nodes": sorted(distance_strategy_tasks),
+                "metrics": shortest_summary,
+            },
+        },
+        "uncertainty_model": {
+            "travel_cost": "distance * uniform(0.9, 1.8)",
+            "energy_variation": "energy_penalty * uniform(0.8, 1.5)",
+            "resource_effectiveness": "sustainability_bonus * uniform(0.7, 1.2)",
+            "action_success": "random() < clip(0.45 + 0.08*bonus - 0.04*energy, 0.25, 0.9)",
+        },
+        "comparison": {
+            "sustainability_strategy_win_rate_percent": round((wins_for_sustainable / runs) * 100, 2),
+            "average_cost_gap_distance_minus_sustainable": round(
+                shortest_summary["average"] - sustainable_summary["average"], 3
+            ),
+        },
+    }
+
+
 def main() -> None:
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -318,6 +467,16 @@ def main() -> None:
         energy_penalty=energy_penalty,
         sustainability_bonus=sustainability_bonus,
         heuristic_distance=distance_lookup,
+    )
+    monte_carlo = run_monte_carlo_comparison(
+        graph=graph,
+        start_node=start_node,
+        goal_node=goal_node,
+        required_visit_nodes=required_visit_nodes,
+        energy_penalty=energy_penalty,
+        sustainability_bonus=sustainability_bonus,
+        distance_lookup=distance_lookup,
+        runs=300,
     )
 
     minimax_candidates = ["Anderson", "FreyHall", "OEC", "OSS", "Schoenecker", "Murray", "Library"]
@@ -384,16 +543,29 @@ def main() -> None:
             "valid_assignment": csp_solution,
         },
         "integrated_awareness": awareness,
+        "deliverable_2_monte_carlo": monte_carlo,
     }
 
     output_path = OUTPUT_DIR / "example_run.json"
     output_path.write_text(json.dumps(result, indent=2), encoding="utf-8")
+    monte_carlo_output_path = OUTPUT_DIR / "deliverable2_monte_carlo.json"
+    monte_carlo_output_path.write_text(json.dumps(monte_carlo, indent=2), encoding="utf-8")
 
     print(f"{GAME_NAME} executed.")
     print(f"Output written to: {output_path}")
     print(f"A* path: {' -> '.join(path)}")
     print(f"A* sustainability-aware cost: {round(sustainability_cost, 3)}")
     print(f"Minimax best opening action: {minimax_action} (score {round(minimax_score, 3)})")
+    print(f"Monte Carlo runs: {monte_carlo['runs']}")
+    print(
+        "Sustainable strategy average cost:",
+        monte_carlo["strategies"]["sustainability_aware_a_star"]["metrics"]["average"],
+    )
+    print(
+        "Distance-first strategy average cost:",
+        monte_carlo["strategies"]["distance_first_route"]["metrics"]["average"],
+    )
+    print(f"Monte Carlo output written to: {monte_carlo_output_path}")
 
 
 if __name__ == "__main__":
