@@ -139,11 +139,21 @@ Monte Carlo is a **game replay engine**: the same A* routes from Deliverable 1 a
 
 ---
 
-## 9. Checklist
+## 9. Assignment Goal Questions
+
+| Question | Answer |
+|---|---|
+| What happens when conditions change? | Total route cost varies run-to-run on the same path (e.g., ~4.5 deterministic → ~6.7 average under noise). |
+| Which strategy is more reliable under uncertainty? | **Distance-first** wins ~60% of head-to-head runs; **sustainability-aware** has slightly lower std dev. |
+| Best on average / worst case? | Distance-first (avg 6.41, worst 8.69) vs sustainable (avg 6.73, worst 8.71) in latest run. |
+| More sustainable over time? | **Sustainability-aware** — visits all required objectives and uses green/energy data in planning. |
+
+## 10. Checklist
 
 - [x] Dataset-grounded randomness
 - [x] Two strategies compared
 - [x] 300 simulation runs
 - [x] Average, best, worst, variability reported
+- [x] Visualization (ASCII charts)
 - [x] Analysis and system connection
 - [x] Code + JSON output

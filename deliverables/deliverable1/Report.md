@@ -63,6 +63,16 @@
 | **Domain** | `NONE`, `RECYCLE_BIN`, `COMPOST_HUB`, `BIKE_SUPPORT` |
 | **Constraints** | ≤5 non-NONE placements; all priority nodes served; ≥2 high-energy nodes served; ≤2 compost hubs |
 
+**Example valid CSP solution** (from `example_run.json`):
+
+| Building | Assignment |
+|---|---|
+| OEC | RECYCLE_BIN |
+| Anderson | RECYCLE_BIN |
+| FreyHall | RECYCLE_BIN |
+| Schoenecker | RECYCLE_BIN |
+| OSS, Murray, Library, Brady | NONE |
+
 ## 5. Integrated Sustainability Awareness
 
 - Vocabulary attempt must match a valid sustainability term
@@ -158,13 +168,50 @@ Writes `deliverables/deliverable2/output/example_run.json`
 cd tommie_eco && npm run dev
 ```
 
-## 9. Reflection
+## 9. Explanation and Reflection
 
-- **Design decisions:** One campus model powers both a batch Python pipeline and an interactive web game; search, minimax, and CSP share the same graph and datasets.
-- **What worked well:** Dataset-driven scoring is visible in both UIs; the frontend makes algorithm use tangible (paths, blocks, resource placements, trivia gates).
-- **Improvements:** Keep Python and TypeScript algorithm constants in sync; expand end-of-game results to mirror all fields in `example_run.json`.
+**Design decisions:** We built **one integrated system** (Eco Campus Strategy Game) instead of two separate games. Search handles movement, minimax models competition, and CSP handles resource placement — all on the same UST campus graph.
 
-## 10. Checklist
+**How AI methods are used:**
+
+- **A\*** explores `(current_node, remaining_tasks)` with a sustainability-weighted cost function.
+- **Minimax** chooses strategic opening moves for planner vs pressure agent.
+- **CSP backtracking** assigns limited campus resources under coverage rules.
+
+**How datasets are used:** Energy assets raise cost in high-load buildings; campus resources add bonuses; distance matrix powers heuristics; sustainability factors and vocabulary gate action success.
+
+**Shortest vs sustainable route trade-off:** A* cost **4.546** is not pure distance — it balances LEED/green bonuses and energy penalties. A distance-only plan would skip sustainability signals and may miss mission value even if travel is shorter.
+
+## 10. Screenshots and Example Output
+
+### Python backend run (`python3 src/main.py`)
+
+![Console output: A*, minimax, and Monte Carlo summary](screenshots/python_main_output.png)
+
+**Results shown:**
+
+- A* path: `FreyHall → Library → OSS → OEC → OSS → KochCommons → Anderson`
+- Sustainability-aware cost: **4.546**
+- Minimax best opening: **FreyHall** (score **6.5**)
+- Monte Carlo (300 runs): sustainable avg **6.606**, distance-first avg **3.426**
+- Output files: `deliverables/deliverable2/output/example_run.json`, `deliverable2_monte_carlo.json`
+
+### Web frontend (`npm run dev` → http://localhost:3000)
+
+![Eco Campus Strategy Game — campus map and controls](screenshots/frontend_gameplay.png)
+
+**What the screenshot shows:**
+
+- UST logo and **Eco Campus Strategy** UI
+- Campus graph with player (green, ARC) and AI (red, CHA) positions
+- Turn-based controls: navigate adjacent buildings, place **RECYCLE BIN** / **COMPOST HUB**
+- Live scores and game log tied to real CSV campus data
+
+Structured JSON evidence: `deliverables/deliverable2/output/example_run.json`
+
+**Improvements:** Sync Python/TypeScript constants; make awareness fully interactive in both UIs (Python currently simulates some answers).
+
+## 11. Checklist
 
 - [x] Uses real dataset values
 - [x] Includes search (A*) and minimax
@@ -172,3 +219,4 @@ cd tommie_eco && npm run dev
 - [x] Components interact in one `main()` pipeline
 - [x] Sustainability awareness affects gameplay decisions
 - [x] Interactive frontend implements the same AI methods with real UST data
+- [x] Screenshots included (console + web UI)

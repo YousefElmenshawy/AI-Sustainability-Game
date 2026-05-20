@@ -19,10 +19,10 @@
         "OEC"
       ],
       "metrics": {
-        "average": 6.73,
-        "best_case": 4.974,
-        "worst_case": 8.705,
-        "std_dev": 0.793
+        "average": 6.606,
+        "best_case": 4.633,
+        "worst_case": 8.771,
+        "std_dev": 0.801
       }
     },
     "distance_first_route": {
@@ -30,19 +30,17 @@
       "path": [
         "FreyHall",
         "Library",
-        "OSS",
-        "OEC",
-        "OSS",
+        "KochCommons",
         "Anderson"
       ],
       "required_nodes": [
-        "OEC"
+        "KochCommons"
       ],
       "metrics": {
-        "average": 6.413,
-        "best_case": 4.497,
-        "worst_case": 8.685,
-        "std_dev": 0.975
+        "average": 3.426,
+        "best_case": 2.09,
+        "worst_case": 5.105,
+        "std_dev": 0.706
       }
     }
   },
@@ -53,7 +51,7 @@
     "action_success": "random() < clip(0.45 + 0.08*bonus - 0.04*energy, 0.25, 0.9)"
   },
   "comparison": {
-    "sustainability_strategy_win_rate_percent": 40.33,
-    "average_cost_gap_distance_minus_sustainable": -0.317
+    "sustainability_strategy_win_rate_percent": 0.0,
+    "average_cost_gap_distance_minus_sustainable": -3.18
   }
 }
