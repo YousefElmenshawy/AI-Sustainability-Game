@@ -9,7 +9,7 @@ UST campus sustainability game for **CISC 440 — Artificial Intelligence**. The
 | **Deliverable 1** | Interactive sustainability game (A*, minimax, CSP, awareness) | `src/main.py`, `tommie_eco/` |
 | **Deliverable 2** | Monte Carlo simulation comparing route strategies under uncertainty | `src/main.py`, [`deliverables/deliverable2/`](deliverables/deliverable2/) |
 
-Reports, instructions, and JSON outputs are organized under [`deliverables/`](deliverables/).
+Reports and JSON outputs are in [`deliverables/`](deliverables/) (one `Report.md` per deliverable).
 
 ## Repository Structure
 
@@ -20,8 +20,8 @@ Reports, instructions, and JSON outputs are organized under [`deliverables/`](de
 │   └── ust_campus_map_plot.py     # Optional campus map visualization
 ├── tommie_eco/                    # Next.js frontend game UI
 ├── deliverables/
-│   ├── deliverable1/              # D1 instructions, report template, walkthrough
-│   └── deliverable2/              # D2 Monte Carlo report + output JSON
+│   ├── deliverable1/Report.md     # D1 submission report
+│   └── deliverable2/Report.md     # D2 Monte Carlo report + output/
 └── README.md
 ```
 
@@ -56,7 +56,7 @@ Replays planned routes **300 times** with dataset-grounded randomness:
 1. **Sustainability-aware A\*** — full mission, plans with energy + green bonuses  
 2. **Distance-first targeted route** — fewer stops, minimizes travel distance  
 
-See [`deliverables/deliverable2/Deliverable2_Monte_Carlo.md`](deliverables/deliverable2/Deliverable2_Monte_Carlo.md) for full analysis.
+See [`deliverables/deliverable2/Report.md`](deliverables/deliverable2/Report.md) for full analysis.
 
 ## Datasets
 
@@ -83,8 +83,6 @@ python3 src/main.py
 - `deliverables/deliverable2/output/example_run.json` — full game + Monte Carlo results  
 - `deliverables/deliverable2/output/deliverable2_monte_carlo.json` — Monte Carlo summary only  
 
-Code walkthrough: [`deliverables/deliverable1/MAIN_PY_WALKTHROUGH.md`](deliverables/deliverable1/MAIN_PY_WALKTHROUGH.md)
-
 ### Web frontend
 
 ```bash
@@ -95,17 +93,18 @@ npm run dev
 
 Open **http://localhost:3000**
 
-## Deliverables Folder
+## Deliverables
 
-| Path | Contents |
+| Report | Path |
 |---|---|
-| [`deliverables/deliverable1/`](deliverables/deliverable1/) | Canvas instructions, report template, `main.py` walkthrough |
-| [`deliverables/deliverable2/`](deliverables/deliverable2/) | Monte Carlo report, short summary, JSON outputs |
+| Deliverable 1 | [`deliverables/deliverable1/Report.md`](deliverables/deliverable1/Report.md) |
+| Deliverable 2 | [`deliverables/deliverable2/Report.md`](deliverables/deliverable2/Report.md) |
 
 ## Submission Checklist
 
 **Deliverable 1**
 
+- [ ] [`deliverables/deliverable1/Report.md`](deliverables/deliverable1/Report.md)
 - [ ] Console output from `python3 src/main.py`
 - [ ] `deliverables/deliverable2/output/example_run.json`
 - [ ] Explanation of how datasets affect behavior
@@ -113,7 +112,7 @@ Open **http://localhost:3000**
 
 **Deliverable 2**
 
-- [ ] [`Deliverable2_Monte_Carlo.md`](deliverables/deliverable2/Deliverable2_Monte_Carlo.md) (or [`Deliverable2_Report.md`](deliverables/deliverable2/Deliverable2_Report.md) summary)
+- [ ] [`deliverables/deliverable2/Report.md`](deliverables/deliverable2/Report.md)
 - [ ] `deliverables/deliverable2/output/deliverable2_monte_carlo.json`
 - [ ] Two strategies compared, 300+ runs, uncertainty explained
 

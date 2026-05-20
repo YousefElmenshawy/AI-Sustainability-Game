@@ -111,10 +111,10 @@
           "OEC"
         ],
         "metrics": {
-          "average": 6.608,
-          "best_case": 4.861,
-          "worst_case": 8.614,
-          "std_dev": 0.836
+          "average": 6.73,
+          "best_case": 4.974,
+          "worst_case": 8.705,
+          "std_dev": 0.793
         }
       },
       "distance_first_route": {
@@ -131,10 +131,10 @@
           "OEC"
         ],
         "metrics": {
-          "average": 6.415,
-          "best_case": 4.221,
-          "worst_case": 9.142,
-          "std_dev": 0.997
+          "average": 6.413,
+          "best_case": 4.497,
+          "worst_case": 8.685,
+          "std_dev": 0.975
         }
       }
     },
@@ -145,8 +145,8 @@
       "action_success": "random() < clip(0.45 + 0.08*bonus - 0.04*energy, 0.25, 0.9)"
     },
     "comparison": {
-      "sustainability_strategy_win_rate_percent": 44.67,
-      "average_cost_gap_distance_minus_sustainable": -0.193
+      "sustainability_strategy_win_rate_percent": 40.33,
+      "average_cost_gap_distance_minus_sustainable": -0.317
     }
   }
 }

@@ -13,7 +13,7 @@ from typing import Dict, List, Set, Tuple
 
 ROOT = Path(__file__).resolve().parents[1]
 DATA_DIR = ROOT / "data"
-OUTPUT_DIR = ROOT / "output"
+OUTPUT_DIR = ROOT / "deliverables" / "deliverable2" / "output"
 GAME_NAME = "Tommie EcoOps: Campus Grid"
 
 # Map graph-node labels to dataset location names where available.
