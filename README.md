@@ -8,6 +8,7 @@ UST campus sustainability game for **CISC 440 — Artificial Intelligence**. The
 |---|---|---|
 | **Deliverable 1** | Interactive sustainability game (A*, minimax, CSP, awareness) | `src/main.py`, `tommie_eco/` |
 | **Deliverable 2** | Monte Carlo simulation comparing route strategies under uncertainty | `src/main.py`, [`deliverables/deliverable2/`](deliverables/deliverable2/) |
+| **Deliverable 3** | Paper review — arXiv:2311.12385 | [`deliverables/deliverable3/Report.md`](deliverables/deliverable3/Report.md) |
 
 Reports and JSON outputs are in [`deliverables/`](deliverables/) (one `Report.md` per deliverable).
 
@@ -21,7 +22,8 @@ Reports and JSON outputs are in [`deliverables/`](deliverables/) (one `Report.md
 ├── tommie_eco/                    # Next.js frontend game UI
 ├── deliverables/
 │   ├── deliverable1/Report.md     # D1 submission report
-│   └── deliverable2/Report.md     # D2 Monte Carlo report + output/
+│   ├── deliverable2/Report.md     # D2 Monte Carlo report + output/
+│   └── deliverable3/Report.md     # D3 paper review (arXiv:2311.12385)
 └── README.md
 ```
 
@@ -99,6 +101,7 @@ Open **http://localhost:3000**
 |---|---|
 | Deliverable 1 | [`deliverables/deliverable1/Report.md`](deliverables/deliverable1/Report.md) |
 | Deliverable 2 | [`deliverables/deliverable2/Report.md`](deliverables/deliverable2/Report.md) |
+| Deliverable 3 | [`deliverables/deliverable3/Report.md`](deliverables/deliverable3/Report.md) |
 
 ## Submission Checklist
 
