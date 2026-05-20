@@ -1,6 +1,13 @@
 # Tommie EcoOps: Campus Grid
 
-UST campus sustainability game for **CISC 440 — Artificial Intelligence**. The project combines classical AI (search, minimax, CSP) with real campus data and a Monte Carlo “what if” simulation under uncertainty.
+UST campus sustainability game for **CISC 440 — Artificial Intelligence**. The project combines classical AI (search, minimax, CSP) with real campus data, a Monte Carlo “what if” simulation under uncertainty, and a research paper review connecting search heuristics to our campus planner.
+
+## Group
+
+- Michael Rosas Ceronio  
+- Daniel Getty  
+- Jack Johnson  
+- Yousef Elmenshawi  
 
 ## Project Overview
 
@@ -8,7 +15,7 @@ UST campus sustainability game for **CISC 440 — Artificial Intelligence**. The
 |---|---|---|
 | **Deliverable 1** | Interactive sustainability game (A*, minimax, CSP, awareness) | `src/main.py`, `tommie_eco/` |
 | **Deliverable 2** | Monte Carlo simulation comparing route strategies under uncertainty | `src/main.py`, [`deliverables/deliverable2/`](deliverables/deliverable2/) |
-| **Deliverable 3** | Paper review — arXiv:2311.12385 | [`deliverables/deliverable3/Report.md`](deliverables/deliverable3/Report.md) |
+| **Deliverable 3** | Research paper review (multi-robot RRT + heuristics) | [`deliverables/deliverable3/Report.md`](deliverables/deliverable3/Report.md) |
 
 Reports and JSON outputs are in [`deliverables/`](deliverables/) (one `Report.md` per deliverable).
 
@@ -60,6 +67,20 @@ Replays planned routes **300 times** with dataset-grounded randomness:
 
 See [`deliverables/deliverable2/Report.md`](deliverables/deliverable2/Report.md) for full analysis.
 
+### Research Paper Review (Deliverable 3)
+
+Assigned paper: **[arXiv:2311.12385](https://arxiv.org/abs/2311.12385)** — *Joint-Space Multi-Robot Motion Planning with Learned Decentralized Heuristics*
+
+The report covers:
+
+- **Main idea:** AI-trained multi-robot teams (4–16+ agents) using RRT for movement and route planning (search/rescue, exploration, autonomous vehicles)
+- **Problem:** Joint-state space grows exponentially with each robot; plain RRT fails at scale
+- **Approach:** Kinodynamic RRT + centralized planning, cost-to-go evaluation, and two learned decentralized heuristics (steer + distance) trained with neural networks and imitation learning
+- **Search ties:** Links to A* (goal-cost heuristics), greedy goal bias, and UCS-style lowest-cost expansion
+- **Project connection:** Our campus game uses similar heuristic + tree/search ideas (A*, minimax, Monte Carlo uncertainty) on the UST graph
+
+Full write-up: [`deliverables/deliverable3/Report.md`](deliverables/deliverable3/Report.md)
+
 ## Datasets
 
 All behavior is driven by UST data in `data/` (and mirrored in `tommie_eco/public/` for the web app):
@@ -95,6 +116,8 @@ npm run dev
 
 Open **http://localhost:3000**
 
+Recent frontend features (team updates): interactive campus map, UST logo, integrated strategy module (`tommie_eco/src/lib/algorithms/integrated-strategy.ts`), and end-of-game results — see `tommie_eco/public/README_GAME_FLOW.md`.
+
 ## Deliverables
 
 | Report | Path |
@@ -119,6 +142,12 @@ Open **http://localhost:3000**
 - [ ] `deliverables/deliverable2/output/deliverable2_monte_carlo.json`
 - [ ] Two strategies compared, 300+ runs, uncertainty explained
 
-## Team
+**Deliverable 3**
 
-University of St. Thomas — CISC 440 Sustainability Game Project
+- [ ] [`deliverables/deliverable3/Report.md`](deliverables/deliverable3/Report.md)
+- [ ] Paper [2311.12385](https://arxiv.org/abs/2311.12385) cited with accessible arXiv links
+- [ ] Summary: main idea, problem, approach, search-algorithm connections, project relation, key takeaway
+
+---
+
+**University of St. Thomas** — CISC 440 Sustainability Game Project (Spring 2026)
